@@ -2,12 +2,26 @@
 
 import sys
 
+HLT = 0b00000001
+LDI = 0b10000010
+PRN = 0b01000111
+
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        # memory
+        self.ram = [0] * 256
+        # registers
+        self.reg = [0] * 8
+
+        # internal registers:
+        # program counter
+        self.pc = 0
+        # instruction register
+        # flags
+
 
     def load(self):
         """Load a program into memory."""
@@ -62,4 +76,46 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        while True:
+            # instruction register
+            ir = self.pc
+            # read command
+            op = self.ram_read(ir)
+            # read operands
+            operand_a = self.ram_read(ir + 1)
+            operand_b = self.ram_read(ir + 2)
+
+            # execute command
+            if op == HLT:
+                # halt program
+                break
+            elif op == LDI:
+                # set value of register to an int
+                self.reg[operand_a] = operand_b
+            elif op == PRN:
+                # print value stored in given register
+                print(self.reg[operand_a])
+            else:
+                print(f"Command not found: {bin(op)}")
+
+            # check if command sets pc
+            # if not, update pc
+            if op & 16 == 0:
+                num_operands = 0
+                if op & 64 != 0: num_operands += 1
+                elif op & 128 != 0: num_operands += 2
+                self.pc += num_operands + 1
+
+                mdr = self.ram[mar]  # mdr - Memory Data Register
+
+        return mdr
+
+
+
+
+    def ram_read(self, mar):  # mar - Memory Address Register
+        """Return value stored at address"""
+
+    def ram_write(self, mar, mdr):
+        """Write value to address"""
+        self.ram[mar] = mdr
