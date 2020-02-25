@@ -2,25 +2,50 @@
 
 import sys
 
-HLT = 0b00000001
-LDI = 0b10000010
-PRN = 0b01000111
+# `HLT` instruction handler
+HLT = 1
+# `LDI` instruction handler
+LDI = 130
+# `PRN` instruction handler
+PRN = 71
 
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
-        # memory
-        self.ram = [0] * 256
-        # registers
-        self.reg = [0] * 8
+        # Add list properties to the `CPU` class to hold 256 bytes of memory and 8
+        # general-purpose registers.
 
-        # internal registers:
-        # program counter
+        # > Hint: you can make a list of a certain number of zeros with this syntax:
+        # >
+        # > ```python
+        # > x = [0] * 25  # x is a list of 25 zeroes
+        # > ```
+
+        # Also add properties for any internal registers you need, e.g. `PC`.
+
+        self.ram = [0] * 256
+        self.reg = [0] * 8
         self.pc = 0
-        # instruction register
-        # flags
+
+    # Add RAM functions `ram_read()` and `ram_write()`
+
+    # > Inside the CPU, there are two internal registers used for memory operations:
+    # > the _Memory Address Register_ (MAR) and the _Memory Data Register_ (MDR). The
+    # > MAR contains the address that is being read or written to. The MDR contains
+    # > the data that was read or the data to write. You don't need to add the MAR or
+    # > MDR to your `CPU` class, but they would make handy paramter names for
+    # > `ram_read()` and `ram_write()`
+
+    # `ram_read()` should accept the address to read and return the value stored
+    # there.
+    def ram_read(self, MAR):
+        return self.ram[MAR]
+
+    # `ram_write()` should accept a value to write, and the address to write it to.
+    def ram_write(self, MDR, MAR):
+        self.ram[MAR] = MDR
 
 
     def load(self):
@@ -76,46 +101,40 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
+        # Implement the core of `CPU`'s `run()` method
+        self.load()
+        # Needs to read the memory address that's stored in register `PC`, and store
+        # that result in `IR`, the _Instruction Register_.
+        # `IR`, contains a copy of the currently executing instruction
         while True:
-            # instruction register
-            ir = self.pc
-            # read command
-            op = self.ram_read(ir)
-            # read operands
-            operand_a = self.ram_read(ir + 1)
-            operand_b = self.ram_read(ir + 2)
-
-            # execute command
-            if op == HLT:
-                # halt program
-                break
-            elif op == LDI:
-                # set value of register to an int
+            IR = self.ram[self.pc]
+            # LDI
+            if IR == LDI:
+                # Read the bytes at `PC+1` and `PC+2` from RAM into variables `operand_a` and `operand_b`
+                operand_a = self.ram[self.pc + 1]
+                operand_b = self.ram[self.pc + 2]
+                # store the data
                 self.reg[operand_a] = operand_b
-            elif op == PRN:
-                # print value stored in given register
-                print(self.reg[operand_a])
+                # increment the PC by 3 to skip the arguments
+                self.pc += 3
+            # PRN
+            elif IR == PRN:
+                data = self.ram[self.pc + 1]
+                # print
+                print(self.reg[data])
+                # increment the PC by 2 to skip the argument
+                self.pc += 2
+            # HLT
+            elif IR == HLT:
+                sys.exit(0)
+            # else, print did not understand
             else:
-                print(f"Command not found: {bin(op)}")
+                print(f"I did not understand that command: {IR}")
+                sys.exit(1)
 
-            # check if command sets pc
-            # if not, update pc
-            if op & 16 == 0:
-                num_operands = 0
-                if op & 64 != 0: num_operands += 1
-                elif op & 128 != 0: num_operands += 2
-                self.pc += num_operands + 1
-
-                mdr = self.ram[mar]  # mdr - Memory Data Register
-
-        return mdr
-
-
-
-
-    def ram_read(self, mar):  # mar - Memory Address Register
-        """Return value stored at address"""
-
-    def ram_write(self, mar, mdr):
-        """Write value to address"""
-        self.ram[mar] = mdr
+        # Internal Registers
+        # `PC`: Program Counter, address of the currently executing instruction
+        # `IR`: Instruction Register, contains a copy of the currently executing instruction
+        # `MAR`: Memory Address Register, holds the memory address we're reading or writing
+        # `MDR`: Memory Data Register, holds the value to write or the value just read
+        # `FL`: Flags, see below
